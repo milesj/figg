@@ -10,12 +10,16 @@
   - [Strings](#strings)
   - [Lists](#lists)
   - [Maps](#maps)
+- [Examples](#examples)
+  - [package.json](#packagejson)
+  - [babel.config.js](#babelconfigjs)
+  - [jest.config.js](#jestconfigjs)
 
 ## Syntax
 
 ### Properties
 
-Properties are the most common feature, as they declare a key-value pair within its current [object scope](#maps). If defined at the top-level of a file, this is referred to as the root scope.
+Properties are the most common feature, as they declare a key-value pair within its current [block scope](#maps), and are returned from the figg file when parsed. If defined at the top-level of a file, this is referred to as the root scope.
 
 Declaring a property requires a unique name on the left-hand side (with no leading whitespace unless in a [map](#maps)), followed by a space, an equals sign operator (`=`) denoting assignment, another space, and lastly a [value](#value-types) on the right-hand side. An unquoted property name supports the characters `a-z`, `A-Z`, `0-9`, `_` and _must not_ begin with a number, while a quoted property name supports any character and _must_ be wrapped with double quotes.
 
@@ -130,9 +134,14 @@ TODO
 Lists are a structural type that contain other [values](#value-types). A list is declared with an opening bracket (`[`), followed by zero or more [values](#value-types) separated by trailing commas, and then a closing bracket (`]`). Lists can be declared inline or span multiple lines. When spanning multiple lines, each node must be indented with a tab character (`\t`), and the trailing comma on the last line is optional.
 
 ```
-emptyList []
-numberList [1, 2, 3]
-stringList [
+# Empty list
+[]
+
+# Number list inline
+[1, 2, 3]
+
+# String list multiline
+[
 	"foo",
 	"bar",
 	"baz",
@@ -153,15 +162,21 @@ matrix [
 
 ### Maps
 
-Maps are a structural type that contain nested [properties](#properties). A map is declared with an opening brace (`{`), followed by zero or more [properties](#properties) separated by newlines (`\n`), and then a closing brace (`}`). All nodes within the map must be indented with a tab character (`\t`).
+Maps are a structural type that contain nested [properties](#properties) and declare a block scope. A map is declared with an opening brace (`{`), followed by zero or more [properties](#properties) separated by newlines (`\n`), and then a closing brace (`}`). All nodes within the map must be indented with a tab character (`\t`), unless there's a single node, in which it can be inlined.
 
 ```
-emptyMap {}
-stringMap {
+# Empty map
+{}
+
+# String value map
+{
 	foo = "a"
 	bar = "b"
 	"baz/qux" = "c"
 }
+
+# Inline map of 1 property
+{ prop = 123 }
 ```
 
 Maps can also contain other maps.
@@ -177,3 +192,62 @@ one {
 ```
 
 > Since maps are a structural type, the assignment operator (`=`) can be omitted when declaring a property.
+
+## Examples
+
+### package.json
+
+```
+name = "figg"
+description = "The coolest configuration format."
+keywords = ["figg", "config"]
+license = "MIT"
+main = "./index.js"
+peerDependencies {
+	react = ">=17.0.0"
+}
+devDependencies {
+	"@boost/common" = "^2.1.3"
+}
+```
+
+### babel.config.js
+
+```
+plugins ["relay"]
+
+presets [
+	["@babel/preset-react", { runtime = "automatic" }],
+	["@babel/preset-env", {
+		modules = false
+		targets { node = "current" }
+	}],
+]
+
+overrides [
+	{
+		files = "**/*.ts"
+		presets ["@babel/preset-typescript"]
+	}
+]
+```
+
+### jest.config.js
+
+```
+coverageThreshold {
+	global {
+		branches = 5
+		functions = 5
+		lines = 5
+		statements = 5
+	}
+}
+
+moduleNameMapper {
+	"\\.(scss|css|jpg|jpeg|png|gif)$" = "identity-obj-proxy"
+}
+
+testEnvironment = "jsdom"
+testRunner = "jest-circus/runner"
+```
