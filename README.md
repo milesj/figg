@@ -21,45 +21,28 @@
 
 Properties are the most common feature, as they declare a key-value pair within its current [block scope](#maps), and are returned from the figg file when parsed. If defined at the top-level of a file, this is referred to as the root scope.
 
-Declaring a property requires a unique name on the left-hand side (with no leading whitespace unless in a [map](#maps)), followed by a space, an equals sign operator (`=`) denoting assignment, another space, and lastly a [value](#value-types) on the right-hand side. An unquoted property name supports the characters `a-z`, `A-Z`, `0-9`, `_` and _must not_ begin with a number, while a quoted property name supports any character and _must_ be wrapped with double quotes.
+Declaring a property requires a unique name on the left-hand side (with no leading whitespace if in the root scope), followed by a space, and lastly a [value](#value-types) on the right-hand side. An unquoted property name supports the characters `a-z`, `A-Z`, `0-9`, `_` and _must not_ begin with a number, while a quoted property name supports any character and _must_ be wrapped with double quotes.
 
 ```
-propInCamelCase = 123
-prop_in_snake_case = "abc"
-"@scope/dep" = "v1.0.0"
+propInCamelCase 123
+prop_in_snake_case "abc"
+"@scope/dep" "v1.0.0"
 ```
 
 Multiple properties are declared across multiple lines, with 1 property per line. Each property must have a trailing newline character (`\n`), excluding the last line in the file (which is optional).
 
 ```
-propFoo = "foo"
-propBar = "bar"
-```
-
-Invalid property names, duplicates, or whitespace will fail with a syntax error.
-
-```
-# INVALID, spaces required around = operator
-noSpacing=123
-
-# INVALID, must not start with a number
-1stItem = "abc"
-
-# INVALID, multiple properties must be on separate lines
-propFoo = "foo" propBar = "bar"
-
-# INVALID, property has already been declared
-prop = 123
-prop = 456
+propOne "foo"
+propTwo "bar"
 ```
 
 In the context of a language, these properties would be accessed as a key on an object or hashmap that was returned from a parser function. Let's demonstrate this with JavaScript.
 
 ```js
 const cfg = parseFigg(`
-foo = "abc"
+foo "abc"
 bar {
-	baz = 123
+	baz 123
 }
 `);
 
@@ -73,9 +56,9 @@ Comments are declared with a leading hash and space (`# `), followed by the comm
 
 ```
 # Comment is above a property
-prop = "above"
+prop "above"
 
-prop = "inline" # Comment is trailing a property
+prop "inline" # Comment is trailing a property
 ```
 
 Multiple line comments are declared with a leading hash and space (`# `) for each line. There is no "doc block" like syntax.
@@ -83,7 +66,7 @@ Multiple line comments are declared with a leading hash and space (`# `) for eac
 ```
 # This comment will span multiple lines.
 # So we prepend each line with a hash.
-prop = "multi"
+prop "multi"
 ```
 
 ### Whitespace
@@ -91,8 +74,8 @@ prop = "multi"
 A few rules around whitespace:
 
 - There is _no_ limit to the amount of newlines that can exist between lines.
-- Properties/Comments in the root scope must _not_ have a leading space or tab character.
-- Properties/Comments in an object scope must be indented with a tab character (`\t`) for each object depth.
+- Nodes in the root scope must _not_ have a leading space or tab character.
+- Nodes in a nested scope (within lists and maps) must be indented with a tab character (`\t`) for each depth.
 - Comments must have a space between the leading hash (`#`) and trailing message.
 
 ## Structure
@@ -103,11 +86,11 @@ The following types are acceptable values to assign to both properties and varia
 
 ### Booleans
 
-Booleans are a primitive type for declaring a binary true/false (or on/off) value. The value is represented by the `true` and `false` keywords (lowercase only). 
+Booleans are a primitive type for declaring a binary on/off value. The value is represented by the `true` and `false` keywords. 
 
 ```
-propTruthy = true
-propFalsy = false
+enabled true
+disabled false
 ```
 
 ### Numbers
@@ -115,14 +98,22 @@ propFalsy = false
 Numbers are a [double-precision 64-bit binary format (IEEE 754)](https://en.wikipedia.org/wiki/Floating-point_arithmetic) value, like `double` in Java or C#. This means it can represent fractional values, but there are some limits to what it can store. A number only keeps about 17 decimal places of precision, with the largest value a number can hold being 1.8E308.
 
 ```
-propInt = 123
-propFloat = 456.78
+int 123
+float 456.78
+```
+
+Numbers can also express binary (`0b`), octal (`0o`), and hexadecimal (`0x`) literals.
+
+```
+binary 0b10101101
+octal 0o666
+hex 0xdeadbeef
 ```
 
 For large numbers or better readability, the `_` character can be used to separate the digits per thousand.
 
 ```
-propInt = 123_456_789 # 123,456,789
+bigint 123_456_789 # 123,456,789
 ```
 
 ### Strings
@@ -158,8 +149,6 @@ matrix [
 ]
 ```
 
-> Since lists are a structural type, the assignment operator (`=`) can be omitted when declaring a property.
-
 ### Maps
 
 Maps are a structural type that contain nested [properties](#properties) and declare a block scope. A map is declared with an opening brace (`{`), followed by zero or more [properties](#properties) separated by newlines (`\n`), and then a closing brace (`}`). All nodes within the map must be indented with a tab character (`\t`), unless there's a single node, in which it can be inlined.
@@ -170,13 +159,13 @@ Maps are a structural type that contain nested [properties](#properties) and dec
 
 # String value map
 {
-	foo = "a"
-	bar = "b"
-	"baz/qux" = "c"
+	foo "a"
+	bar "b"
+	"baz/qux" "c"
 }
 
 # Inline map of 1 property
-{ prop = 123 }
+{ prop 123 }
 ```
 
 Maps can also contain other maps.
@@ -185,29 +174,27 @@ Maps can also contain other maps.
 one {
 	two {
 		three {
-			prop = "value"
+			prop "value"
 		}
 	}
 }
 ```
-
-> Since maps are a structural type, the assignment operator (`=`) can be omitted when declaring a property.
 
 ## Examples
 
 ### package.json
 
 ```
-name = "figg"
-description = "The coolest configuration format."
-keywords = ["figg", "config"]
-license = "MIT"
-main = "./index.js"
+name "figg"
+description "The coolest configuration format."
+keywords ["figg", "config"]
+license "MIT"
+main "./index.js"
 peerDependencies {
-	react = ">=17.0.0"
+	react ">=17.0.0"
 }
 devDependencies {
-	"@boost/common" = "^2.1.3"
+	"@boost/common" "^2.1.3"
 }
 ```
 
@@ -217,16 +204,16 @@ devDependencies {
 plugins ["relay"]
 
 presets [
-	["@babel/preset-react", { runtime = "automatic" }],
+	["@babel/preset-react", { runtime "automatic" }],
 	["@babel/preset-env", {
-		modules = false
-		targets { node = "current" }
+		modules false
+		targets { node "current" }
 	}],
 ]
 
 overrides [
 	{
-		files = "**/*.ts"
+		files ["**/*.ts"]
 		presets ["@babel/preset-typescript"]
 	}
 ]
@@ -237,17 +224,17 @@ overrides [
 ```
 coverageThreshold {
 	global {
-		branches = 5
-		functions = 5
-		lines = 5
-		statements = 5
+		branches 5
+		functions 5
+		lines 5
+		statements 5
 	}
 }
 
 moduleNameMapper {
-	"\\.(scss|css|jpg|jpeg|png|gif)$" = "identity-obj-proxy"
+	"\\.(scss|css|jpg|jpeg|png|gif)$" "identity-obj-proxy"
 }
 
-testEnvironment = "jsdom"
-testRunner = "jest-circus/runner"
+testEnvironment "jsdom"
+testRunner "jest-circus/runner"
 ```
