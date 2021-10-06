@@ -2,14 +2,14 @@
 
 - [Syntax](#syntax)
   - [Properties](#properties)
-  - [Objects](#objects)
-  - [Lists](#lists)
   - [Comments](#comments)
   - [Whitespace](#whitespace)
 - [Value types](#value-types)
   - [Booleans](#booleans)
   - [Numbers](#numbers)
   - [Strings](#strings)
+  - [Lists](#lists)
+  - [Objects](#objects)
 
 ## Syntax
 
@@ -17,11 +17,12 @@
 
 Properties are the most common feature, as they declare a key-value pair within its current [object scope](#objects). If defined at the top-level of a file, this is referred to as the root scope.
 
-Declaring a property requires a unique name on the left-hand side (with no leading whitespace unless in an [object](#objects)), followed by a space, an equals sign operator (`=`) denoting assignment, another space, and lastly a [value](#value-types) on the right-hand side. The property name supports the characters `a-z`, `A-Z`, `0-9`, `_`, and _must not_ begin with a number.
+Declaring a property requires a unique name on the left-hand side (with no leading whitespace unless in an [object](#objects)), followed by a space, an equals sign operator (`=`) denoting assignment, another space, and lastly a [value](#value-types) on the right-hand side. An unquoted property name supports the characters `a-z`, `A-Z`, `0-9`, `_` and _must not_ begin with a number, while a quoted property name supports any character and _must_ be wrapped with double quotes.
 
 ```
 propInCamelCase = 123
 prop_in_snake_case = "abc"
+"@scope/dep" = "v1.0.0"
 ```
 
 Multiple properties are declared across multiple lines, with 1 property per line. Each property must have a trailing newline character (`\n`), excluding the last line in the file (which is optional).
@@ -48,7 +49,7 @@ prop = 123
 prop = 456
 ```
 
-In the context of a language, these properties would be accessed as a key on an object or hashmap. Let's demonstrate this with JavaScript.
+In the context of a language, these properties would be accessed as a key on an object or hashmap that was returned from a parser function. Let's demonstrate this with JavaScript.
 
 ```js
 const cfg = parseFigg(`
@@ -59,6 +60,12 @@ bar = 123
 cfg.foo; // -> "abc"
 cfg.bar; // -> 123
 ```
+
+#### Objects
+
+#### Lists
+
+Properties can assign multiple [values](#value-types) with a list, which is a special value type denoted with brackets (`[]`).
 
 ### Comments
 
@@ -83,6 +90,7 @@ prop = "multi"
 
 A few rules around whitespace:
 
+- There is _no_ limit to the amount of newlines that can exist between lines.
 - Properties/Comments in the root scope must _not_ have a leading space or tab character.
 - Properties/Comments in an object scope must be indented with a tab character (`\t`) for each object depth.
 - Comments must have a space between the leading hash (`#`) and trailing message.
@@ -104,9 +112,7 @@ propFalsy = false
 
 ### Numbers
 
-Numbers are a [double-precision 64-bit binary format (IEEE 754)](https://en.wikipedia.org/wiki/Floating-point_arithmetic) value, 
-like `double` in Java or C#. This means it can represent fractional values, but there are some limits to what it can store. 
-A number only keeps about 17 decimal places of precision, with the largest value a number can hold being 1.8E308.
+Numbers are a [double-precision 64-bit binary format (IEEE 754)](https://en.wikipedia.org/wiki/Floating-point_arithmetic) value, like `double` in Java or C#. This means it can represent fractional values, but there are some limits to what it can store. A number only keeps about 17 decimal places of precision, with the largest value a number can hold being 1.8E308.
 
 ```
 propInt = 123
@@ -117,4 +123,41 @@ For large numbers or better readability, the `_` character can be used to separa
 
 ```
 propInt = 123_456_789 # 123,456,789
+```
+
+### Strings
+
+TODO
+
+### Lists
+
+Lists are a structural type that contain other [values](#value-types). A list is declared with an opening bracket (`[`), followed by zero or more [values](#value-types) separated by trailing commas, and then a closing bracket (`]`). Lists can be declared inline or span multiple lines. When spanning multiple lines, each item must be indented with a tab character (`\t`), and the trailing comma on the last item is optional.
+
+```
+emptyList = []
+numberList = [1, 2, 3]
+stringList = [
+	"foo",
+	"bar",
+	"baz",
+]
+```
+
+Lists can also contain other lists.
+
+```
+matrix = [
+	[0, 1, 2],
+	[3, 4, 5],
+	[6, 7, 8],
+]
+```
+
+Since lists are a structural type, the assignment operator (`=`) can be omitted when declaring a property.
+
+```
+list = []
+
+# Shorthand
+list []
 ```
