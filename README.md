@@ -118,13 +118,13 @@ bigint 123_456_789 # 123,456,789
 
 ### Strings
 
-Strings are a primitive type that declare a sequence of UTF-8 characters, represented by a set of wrapping double quotes.
+Strings are a primitive type that declare a sequence of UTF-8 characters, represented by a set of wrapping double quotes (`"`).
 
 ```
 str "This is a string"
 ```
 
-Strings can also span multiple lines without extra syntax. When using this form, newlines (`\n`) are converted into spaces (`\s`). However, when nested within a block scope, the additional lines must also be indented accordingly.
+Strings can also span multiple lines without extra syntax. When using this form, newlines (`\n`) are converted into spaces (`\s`). Furthermore, when nested within a block scope, the additional lines must also be indented accordingly.
 
 ```
 str "This is a 
@@ -138,7 +138,7 @@ block {
 }
 ```
 
-To preserve newlines (`\n`) and declare large strings, like paragraphs, you can use the triple double quote syntax, which requires leading `"""\n` and trailing `\n"""` characters. The same indentation rules apply here as well.
+To preserve newlines (`\n`) and declare lengthy strings, like paragraphs, you can use the triple double quote syntax, which requires leading `"""\n` and trailing `\n"""` characters. The same indentation rules apply here as well.
 
 ```
 para """
@@ -161,9 +161,10 @@ file "C:\\some\\path"
 
 #### Literals
 
-Literals are a special kind of string that do _not_ allow escaping. This is perfect for Windows style paths, regex patterns, shell scripts, and more. Literals are represented by wrapping backticks instead of double quotes.
+Literals are a special kind of string that do _not_ allow escaping or newlines (`\n`). This is perfect for Windows style paths, regex patterns, shell scripts, and more. Literals are represented by wrapping backticks instead of double quotes.
 
 ```
+str `This contains "double" and 'single' quotes`
 file `C:\some\path`
 regex `foo/.*?`
 ```
