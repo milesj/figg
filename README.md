@@ -168,7 +168,7 @@ file `C:\some\path`
 regex `foo/.*?`
 ```
 
-> If your literal contains a backtick, there is no way to escape it, so unfortunately, you'll need to use a non-literal string and apply that correct escaping.
+> If your literal contains a backtick, unfortunately you'll need to use a non-literal string and apply that correct escaping.
 
 ### Lists
 
@@ -282,7 +282,7 @@ coverageThreshold {
 }
 
 moduleNameMapper {
-	"\\.(scss|css|jpg|jpeg|png|gif)$" "identity-obj-proxy"
+	`\.(scss|css|jpg|jpeg|png|gif)$` "identity-obj-proxy"
 }
 
 testEnvironment "jsdom"
