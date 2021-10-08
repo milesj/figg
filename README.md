@@ -3,6 +3,9 @@
 - [Syntax](#syntax)
   - [Properties](#properties)
   - [Attributes](#attributes)
+  - [Directives](#directives)
+    - [schema](#schema)
+    - [extends](#extends)
   - [Comments](#comments)
   - [Whitespace](#whitespace)
 - [Value types](#value-types)
@@ -14,6 +17,7 @@
   - [Structurals](#structurals)
     - [Lists](#lists)
     - [Maps](#maps)
+- [Schema](#schema)
 - [Examples](#examples)
   - [package.json](#packagejson)
   - [tsconfig.json](#tsconfigjson)
@@ -62,7 +66,7 @@ Attributes are a mechanism for assigning metadata to [properties](#properties), 
 
 ```
 @production
-prop = "value"
+prop "value"
 ```
 
 Multiple attributes can be assigned to a property by stacking them vertically separated by a newline (`\n`) or horizontally separated by a space (`\s`).
@@ -70,21 +74,21 @@ Multiple attributes can be assigned to a property by stacking them vertically se
 ```
 @deprecated
 @production
-prop = "value"
+prop "value"
 
 # Equivalent
 @deprecated @production
-prop = "value"
+prop "value"
 ```
 
 By default, an assigned attribute has an internal value of `true`, but this value can be customized through a single argument passed to the attribute like a function call. This syntax requires an opening parenthesis (`(`) on the left-hand side, followed by a single [primitive value](#primitives), a closing parenthesis on the right-hand side (`)`), and must be declared after the attribute name.
 
 ```
 @env("development")
-prop = "value"
+prop "value"
 
 @logLevel(5)
-prop = "value"
+prop "value"
 ```
 
 Because attributes assign unique metadata to properties, we now have the ability to declare multiple properties _of the same name_ that can be differentiated by consumers based on these attributes. For example, we can declare different property values per environment.
@@ -100,9 +104,50 @@ logLevel "warning"
 logLevel "error"
 ```
 
+### Directives
+
+While attributes define metadata for properties, a directive defines metadata, instructions, and other useful information for the document. A directive is defined at the top-level of the document, and must be declared before all other node types.
+
+A directive is represented by a leading hash (`#`), followed by an opening bracket (`[`), the name of the direction, a closing bracket (`]`), a colon and space (`: `), and lastly the value of the directive. Since the directive is treated as a pseudo comment, the value is declared as-is, and does not follow any primitive value semantics.
+
+```
+#[example]: some value
+```
+
+> Custom directives are not allowed in user-land, instead Figg provides a handful of built-in directives for common scenarios.
+
+#### schema
+
+The `schema` directive declares structural type information for the current document by linking to a [`*.figgs` file](#schema) using a fully qualified HTTP(S) URL.
+
+```
+#[schema]: https://raw.githubusercontent.com/milesj/figg/master/example.figgs
+
+prop "value"
+```
+
+#### extends
+
+The `extends` directive is a built-in feature for declaring additional `*.figg` files that the current document will extend and merge with.
+
+```
+#[extends]: ./some/relative/path/to/example.figg
+
+prop "value"
+```
+
+Multiple extends are supported by declaring a directive for each file path. The order in which these are defined does matter, as subsequent extends will merge over the previous, with the document itself merging over all extends.
+
+```
+#[extends]: ./some/relative/path/to/example.figg
+#[extends]: ../../another/path/to/example.figg
+
+prop "value"
+```
+
 ### Comments
 
-Comments are declared with a leading hash and space (`# `), followed by the comment message. They can appear above any token, or trailing any line.
+Comments are declared with a leading hash and space (`# `), followed by the comment message. They can appear above any token, or trailing any line. The space after the hash is required to disambiguate between directives.
 
 ```
 # Comment is above a property
@@ -282,6 +327,10 @@ one {
 	}
 }
 ```
+
+## Schema
+
+TODO
 
 ## Examples
 
