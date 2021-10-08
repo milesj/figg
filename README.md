@@ -2,17 +2,21 @@
 
 - [Syntax](#syntax)
   - [Properties](#properties)
+  - [Attributes](#attributes)
   - [Comments](#comments)
   - [Whitespace](#whitespace)
 - [Value types](#value-types)
-  - [Booleans](#booleans)
-  - [Numbers](#numbers)
-  - [Strings](#strings)
-    - [Literals](#literals)
-  - [Lists](#lists)
-  - [Maps](#maps)
+  - [Primitives](#primitives)
+    - [Booleans](#booleans)
+    - [Numbers](#numbers)
+    - [Strings](#strings)
+      - [Literals](#literals)
+  - [Structurals](#structurals)
+    - [Lists](#lists)
+    - [Maps](#maps)
 - [Examples](#examples)
   - [package.json](#packagejson)
+  - [tsconfig.json](#tsconfigjson)
   - [babel.config.js](#babelconfigjs)
   - [jest.config.js](#jestconfigjs)
 
@@ -52,6 +56,50 @@ cfg.foo; // -> "abc"
 cfg.bar.baz; // -> 123
 ```
 
+### Attributes
+
+Attributes are a mechanism for assigning metadata to [properties](#properties), and are declared above a property node with a leading `@`, followed by the attribute name. The attribute name supports the characters `a-z`, `A-Z`, `_`.
+
+```
+@production
+prop = "value"
+```
+
+Multiple attributes can be assigned to a property by stacking them vertically separated by a newline (`\n`) or horizontally separated by a space (`\s`).
+
+```
+@deprecated
+@production
+prop = "value"
+
+# Equivalent
+@deprecated @production
+prop = "value"
+```
+
+By default, an assigned attribute has an internal value of `true`, but this value can be customized through a single argument passed to the attribute like a function call. This syntax requires an opening parenthesis (`(`) on the left-hand side, followed by a single [primitive value](#primitives), a closing parenthesis on the right-hand side (`)`), and must be declared after the attribute name.
+
+```
+@env("development")
+prop = "value"
+
+@logLevel(5)
+prop = "value"
+```
+
+Because attributes assign unique metadata to properties, we now have the ability to declare multiple properties _of the same name_ that can be differentiated by consumers based on these attributes. For example, we can declare different property values per environment.
+
+```
+@development
+logLevel "debug"
+
+@staging
+logLevel "warning"
+
+@production
+logLevel "error"
+```
+
 ### Comments
 
 Comments are declared with a leading hash and space (`# `), followed by the comment message. They can appear above any token, or trailing any line.
@@ -84,7 +132,9 @@ A few rules around whitespace:
 
 The following types are acceptable values to assign to both properties and variables.
 
-### Booleans
+### Primitives
+
+#### Booleans
 
 Booleans are a primitive type for declaring a binary on/off value. The value is represented by the `true` and `false` keywords. 
 
@@ -93,7 +143,7 @@ enabled true
 disabled false
 ```
 
-### Numbers
+#### Numbers
 
 Numbers are a [double-precision 64-bit binary format (IEEE 754)](https://en.wikipedia.org/wiki/Floating-point_arithmetic) primitive value, like `double` in Java or C#. This means it can represent fractional values, but there are some limits to what it can store. A number only keeps about 17 decimal places of precision, with the largest value a number can hold being 1.8E308.
 
@@ -116,7 +166,7 @@ For large numbers or better readability, the `_` character can be used to separa
 bigint 123_456_789 # 123,456,789
 ```
 
-### Strings
+#### Strings
 
 Strings are a primitive type that declare a sequence of UTF-8 characters, represented by a set of wrapping double quotes (`"`).
 
@@ -159,7 +209,7 @@ white "Has\ttabs and \nnew lines"
 file "C:\\some\\path"
 ```
 
-#### Literals
+##### Literals
 
 Literals are a special kind of string that do _not_ allow escaping or newlines (`\n`). This is perfect for Windows style paths, regex patterns, shell scripts, and more. Literals are represented by wrapping backticks instead of double quotes.
 
@@ -171,7 +221,9 @@ regex `foo/.*?`
 
 > If your literal contains a backtick, unfortunately you'll need to use a non-literal string and apply that correct escaping.
 
-### Lists
+### Structurals
+
+#### Lists
 
 Lists are a structural type that contain other [values](#value-types). A list is declared with an opening bracket (`[`), followed by zero or more [values](#value-types) separated by trailing commas, and then a closing bracket (`]`). Lists can be declared inline or span multiple lines. When spanning multiple lines, each node must be indented with a tab character (`\t`), and the trailing comma on the last line is optional.
 
@@ -200,7 +252,7 @@ matrix [
 ]
 ```
 
-### Maps
+#### Maps
 
 Maps are a structural type that contain nested [properties](#properties) and declare a block scope. A map is declared with an opening brace (`{`), followed by zero or more [properties](#properties) separated by newlines (`\n`), and then a closing brace (`}`). All nodes within the map must be indented with a tab character (`\t`), unless there's a single node, in which it can be inlined.
 
@@ -246,6 +298,28 @@ peerDependencies {
 }
 devDependencies {
 	"@boost/common" "^2.1.3"
+}
+```
+
+### tsconfig.json
+
+```
+extends "./tsconfig.options.json"
+
+include ["**/*"]
+
+exclude [
+	"build/**/*",
+	"node_modules"
+]
+
+compilerOptions {
+	strict true
+	esModuleInterop true
+	module "esnext"
+	paths {
+		"~/*": ["src/*"]
+	}
 }
 ```
 
