@@ -19,6 +19,12 @@
     - [Tuples](#tuples)
     - [Maps](#maps)
 - [Schema](#schema)
+  - [Primitives](#primitives1)
+  - [Lists](#lists1)
+  - [Tuples](#tuples1)
+  - [Maps](#maps1)
+  - [Properties](#properties1)
+  - [Attributes](#attributes1)
 - [Examples](#examples)
   - [package.json](#packagejson)
   - [tsconfig.json](#tsconfigjson)
@@ -29,7 +35,7 @@
 
 ### Properties
 
-Properties are the most common feature, as they declare a key-value pair within its current [block scope](#maps), and are returned from the figg file when parsed. If defined at the top-level of a file, this is referred to as the root scope.
+Properties are the most common feature, as they declare a key-value pair within its current [block scope](#maps), and are returned from the figg file when parsed. If defined at the top-level of a file, this is referred to as the document scope.
 
 Declaring a property requires a unique name on the left-hand side (with no leading whitespace if in the root scope), followed by a space, and lastly a [value](#value-types) on the right-hand side. An unquoted property name supports the characters `a-z`, `A-Z`, `0-9`, `_` and _must not_ begin with a number, while a quoted property name supports any character and _must_ be wrapped with [double quotes](#strings) or [backticks](#literals).
 
@@ -357,11 +363,31 @@ one {
 
 ## Schema
 
-TODO
+A schema is a secondary file with the extension `.figgs`, that can be coupled with the primary `.figg` file to provide structural type information. This information can then be fed into editors and tooling to provide static analysis, linting, type checking, autocompletion, and more. A schema defines types and shapes similar to other languages like TypeScript or GraphQL.
+
+### Primitives
+
+The primitive types are represented with the `boolean`, `number`, and `string` keywords respectively. They are the lowest level of type and are always used for composition and assignment.
+
+```
+document {
+	propOne boolean
+	propTwo number
+	propThree string
+}
+```
+
+### Lists
+
+### Tuples
+
+### Maps
 
 ## Examples
 
 ### package.json
+
+Document:
 
 ```
 name "figg"
@@ -377,10 +403,26 @@ devDependencies {
 }
 ```
 
-### tsconfig.json
+Schema:
 
 ```
-extends "./tsconfig.options.json"
+document {
+	name string
+	description string
+	keywords List<string>
+	license string
+	main string
+	peerDependencies Map<string>
+	devDependencies Map<string>
+}
+```
+
+### tsconfig.json
+
+Document:
+
+```
+#[extends]: ./tsconfig.options.json
 
 include ["**/*"]
 
@@ -399,7 +441,28 @@ compilerOptions {
 }
 ```
 
+Schema:
+
+```
+type ModuleType = "esnext" | "commonjs"
+
+type CompilerOptions = {
+	strict boolean
+	esModuleInterop boolean
+	module ModuleType
+	paths: Map<List<string>>
+}
+
+document {
+	include List<string>
+	exclude List<string>
+	compilerOptions CompilerOptions
+}
+```
+
 ### babel.config.js
+
+Document:
 
 ```
 plugins ["relay"]
@@ -420,7 +483,29 @@ overrides [
 ]
 ```
 
+Schema:
+
+```
+type EntryWithOptions = Tuple<string, Map>
+
+type Entry = string | EntryWithOptions
+
+type Override = {
+	files List<string>
+	plugins List<Entry>
+	presets List<Entry>
+}
+
+document {
+	plugins List<Entry>
+	presets List<Entry>
+	overrides List<Override>
+}
+```
+
 ### jest.config.js
+
+Document:
 
 ```
 coverageThreshold {
@@ -438,4 +523,22 @@ moduleNameMapper {
 
 testEnvironment "jsdom"
 testRunner "jest-circus/runner"
+```
+
+Schema:
+
+```
+type Threshold = {
+	branches number
+	functions number
+	lines number
+	statements number
+}
+
+document {
+	coverageThreshold Map<Threshold>
+	moduleNameMapper Map<string>
+	testEnvironment string
+	testRunner string
+}
 ```
