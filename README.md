@@ -19,12 +19,10 @@
     - [Tuples](#tuples)
     - [Maps](#maps)
 - [Schema](#schema)
-  - [Primitives](#primitives1)
-  - [Lists](#lists1)
-  - [Tuples](#tuples1)
-  - [Maps](#maps1)
-  - [Properties](#properties1)
-  - [Attributes](#attributes1)
+  - [Primitives](#primitives-1)
+  - [Structurals](#structurals-1)
+  - [Properties](#properties-1)
+  - [Attributes](#attributes-1)
 - [Examples](#examples)
   - [package.json](#packagejson)
   - [tsconfig.json](#tsconfigjson)
@@ -377,11 +375,31 @@ document {
 }
 ```
 
-### Lists
+Literal numbers and strings are also supported, which are typically used in combination with a union to type an enum.
 
-### Tuples
+```
+type LogLevel = "info" | "debug" | "error"
+```
 
-### Maps
+### Structurals
+
+A list and map are declared with the `List<T>` and `Map<T>` types respectively, with both accepting a single generic for the type of its content. For maps, all keys are assumed to be strings.
+
+```
+type ListOfNumbers = List<number>
+type MapOfStrings = Map<string>
+```
+
+A tuple is declared with the `Tuple<T1, T2, T3, ...>` type, and unlike other structurals, supports multiple generics for each member in the tuple, in order of declaration.
+
+```
+# ID, Name
+type User = Tuple<number, string>
+```
+
+### Properties
+
+### Attributes
 
 ## Examples
 
@@ -486,9 +504,9 @@ overrides [
 Schema:
 
 ```
-type EntryWithOptions = Tuple<string, Map>
+type EntryWithOptions Tuple<string, Map>
 
-type Entry = string | EntryWithOptions
+type Entry string | EntryWithOptions
 
 type Override = {
 	files List<string>
