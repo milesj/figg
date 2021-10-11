@@ -16,6 +16,7 @@
       - [Literals](#literals)
   - [Structurals](#structurals)
     - [Lists](#lists)
+    - [Tuples](#tuples)
     - [Maps](#maps)
 - [Schema](#schema)
 - [Examples](#examples)
@@ -270,7 +271,7 @@ regex `foo/.*?`
 
 #### Lists
 
-Lists are a structural type that contain other [values](#value-types). A list is declared with an opening bracket (`[`), followed by zero or more [values](#value-types) separated by trailing commas, and then a closing bracket (`]`). Lists can be declared inline or span multiple lines. When spanning multiple lines, each node must be indented with a tab character (`\t`), and the trailing comma on the last line is optional.
+Lists are a structural type that contain other [values](#value-types) of a _variable_ length, with all the values being of a specific type. A list is declared with an opening bracket (`[`), followed by zero or more [values](#value-types) separated by trailing commas, and then a closing bracket (`]`). Lists can be declared inline or span multiple lines. When spanning multiple lines, each node must be indented with a tab character (`\t`), and the trailing comma on the last line is optional.
 
 ```
 # Empty list
@@ -295,6 +296,32 @@ matrix [
 	[3, 4, 5],
 	[6, 7, 8],
 ]
+```
+
+#### Tuples
+
+Tuples are a structural type that contain other [values](#value-types) of a _fixed_ length, with every value being a mixed type. A tuple is declared with an opening bracket (`(`), followed by one or more [values](#value-types) separated by trailing commas, and then a closing bracket (`)`). Tuples can be declared inline or span multiple lines. When spanning multiple lines, each node must be indented with a tab character (`\t`), and the trailing comma on the last line is optional.
+
+```
+# Tuple inline
+(123, "name")
+
+# Tuple multiline
+(
+	123,
+	"name",
+	{ prop "value" },
+)
+```
+
+Lists can also contain other lists.
+
+```
+matrix (
+	(0, 1, 2),
+	(3, 4, 5),
+	(6, 7, 8),
+)
 ```
 
 #### Maps
@@ -378,11 +405,11 @@ compilerOptions {
 plugins ["relay"]
 
 presets [
-	["@babel/preset-react", { runtime "automatic" }],
-	["@babel/preset-env", {
+	("@babel/preset-react", { runtime "automatic" }),
+	("@babel/preset-env", {
 		modules false
 		targets { node "current" }
-	}],
+	}),
 ]
 
 overrides [
