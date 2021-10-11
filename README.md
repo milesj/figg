@@ -314,7 +314,7 @@ Tuples are a structural type that contain other [values](#value-types) of a _fix
 )
 ```
 
-Lists can also contain other lists.
+Tuples can also contain other tuples.
 
 ```
 matrix (
