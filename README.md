@@ -361,40 +361,97 @@ one {
 
 ## Schema
 
-A schema is a secondary file with the extension `.figgs`, that can be coupled with the primary `.figg` file to provide structural type information. This information can then be fed into editors and tooling to provide static analysis, linting, type checking, autocompletion, and more. A schema defines types and shapes similar to other languages like TypeScript or GraphQL.
+A schema is a secondary `.figg` file that's coupled with the primary `.figg` file (the configuration document) to provide structural type information. This information can then be fed into editors and tooling to provide static analysis, linting, type checking, autocompletion, and more. The schema defines types and shapes in a similar fashion to [JSON Schema](https://json-schema.org/).
 
-### Primitives
-
-The primitive types are represented with the `boolean`, `number`, and `string` keywords respectively. They are the lowest level of type and are always used for composition and assignment.
+The following 3 properties can be declared at the root of the schema, with `document` being required, and `attributes` and `definitions` being optional.
 
 ```
+definitions {
+	# Custom reusable type definitions
+}
+
+attributes {
+	# Type information for available attributes
+}
+
 document {
-	propOne boolean
-	propTwo number
-	propThree string
+	# Type information for properties in the primary document
 }
 ```
 
-Literal numbers and strings are also supported, which are typically used in combination with a union to type an enum.
+When annotating an attribute or property, an object value with a `type` field at minimum is required.
+
+### Primitives
+
+Primitive values are represented with the `boolean`, `number`, or `string` type.
 
 ```
-type LogLevel = "info" | "debug" | "error"
+document {
+	propOne { type "boolean" }
+	propTwo { type "number" }
+	propThree { type "string" }
+}
+```
+
+#### Enums
+
+Enums are also supported for literal strings and numbers, by declaring an `enum` field with a list of values, alongside the `type` field.
+
+```
+document {
+	logLevel { 
+		type "string" 
+		enum ["info", "debug", "error"]
+	}
+}
 ```
 
 ### Structurals
 
-A list and map are declared with the `List<T>` and `Map<T>` types respectively, with both accepting a single generic for the type of its content. For maps, all keys are assumed to be strings.
+Lists are represented with the `list` type and _must_ be accompanied by an `items` field, which annotates the items (values) within the list.
 
 ```
-type ListOfNumbers = List<number>
-type MapOfStrings = Map<string>
+document {
+	listOfNumbers {
+		type "list"
+		items { type "number" }
+	}
+}
 ```
 
-A tuple is declared with the `Tuple<T1, T2, T3, ...>` type, and unlike other structurals, supports multiple generics for each member in the tuple, in order of declaration.
+Maps are represented with the `map` type and _must_ be accompanied by a `values` field OR a `properties` field, but not both. The 2 variants support the following object patterns:
+
+- Dynamic/indexed objects, where all keys are unknown strings, but the values are of the same type. The `values` field annotates the values within the object.
+- Static/shaped objects, where all the keys are explicitly named, and each has their own unique value type. The `properties` field annotates the structure of each key-value pair.
 
 ```
-# ID, Name
-type User = Tuple<number, string>
+document {
+	mapOfStrings {
+		type "map"
+		values { type "string" }
+	}
+	shapedMap {
+		type "map"
+		properties {
+			id { type "number" }
+			name { type "string" }
+		}
+	}
+}
+```
+
+Tuples are represented with the `tuple` type and _must_ be accompanied by an `elements` field, which annotates each element within the tuple using a list.
+
+```
+document {
+	user {
+		type "tuple"
+		elements [
+			{ type "number" }, # ID
+			{ type "string" }, # Name
+		]
+	}
+}
 ```
 
 ### Properties
@@ -409,6 +466,7 @@ Document:
 
 ```
 name "figg"
+version "1.0.0"
 description "The coolest configuration format."
 keywords ["figg", "config"]
 license "MIT"
@@ -424,14 +482,29 @@ devDependencies {
 Schema:
 
 ```
+definitions {
+	dependencies {
+		type "map"
+		values { type "string" }
+	}
+}
+
 document {
-	name string
-	description string
-	keywords List<string>
-	license string
-	main string
-	peerDependencies Map<string>
-	devDependencies Map<string>
+	name { 
+		type "string" 
+		required true
+	}
+	version { type "string" }
+	description { type "string" }
+	keywords {
+		type "list"
+		items { type "string" }
+	}
+	license { type "string" }
+	main { type "string" }
+	peerDependencies { type "$dependencies" }
+	devDependencies { type "$dependencies" }
+	dependencies { type "$dependencies" }
 }
 ```
 
@@ -462,19 +535,31 @@ compilerOptions {
 Schema:
 
 ```
-type ModuleType = "esnext" | "commonjs"
-
-type CompilerOptions = {
-	strict boolean
-	esModuleInterop boolean
-	module ModuleType
-	paths: Map<List<string>>
+definitions {
+	fileGlob {
+		type "list"
+		items { type "string" }
+	}
 }
 
 document {
-	include List<string>
-	exclude List<string>
-	compilerOptions CompilerOptions
+	include { type "$fileGlob" }
+	exclude { type "$fileGlob" }
+	compilerOptions {
+		type "map"
+		properties {
+			strict { type "boolean" }
+			esModuleInterop { type "boolean" }
+			module {
+				type "string"
+				enum ["esnext", "commonjs"]
+			}
+			paths {
+				type "map"
+				values { type "$fileGlob" }
+			}
+		}
+	}
 }
 ```
 
@@ -504,20 +589,50 @@ overrides [
 Schema:
 
 ```
-type EntryWithOptions Tuple<string, Map>
-
-type Entry string | EntryWithOptions
-
-type Override = {
-	files List<string>
-	plugins List<Entry>
-	presets List<Entry>
+definitions {
+	entry {
+		type "union"
+		oneOf [
+			{ type "string" },
+			{
+				type "tuple"
+				members [
+					{ 
+						type "string" 
+						required true
+					}
+					{ type "map" } # TODO
+				]	
+			}
+		]	
+	}
+	entryList {
+		type "list"
+		items { type "$entry" }
+	}
+	fileGlob {
+		type "list"
+		items { type "string" }
+	}
 }
 
 document {
-	plugins List<Entry>
-	presets List<Entry>
-	overrides List<Override>
+	plugins { type "$entryList" }
+	presets { type "$entryList" }
+	overrides {
+		type "list"
+		items {
+			type "map"
+			properties {
+				files { 
+					type "$fileGlob" 
+					required true
+				}
+				plugins { type "$entryList" }
+				presets { type "$entryList" }
+			}
+		}
+	}
 }
 ```
 
@@ -546,17 +661,28 @@ testRunner "jest-circus/runner"
 Schema:
 
 ```
-type Threshold = {
-	branches number
-	functions number
-	lines number
-	statements number
+definitions {
+	threshold {
+		type "map"
+		properties {
+			branches { type "number" }
+			functions { type "number" }
+			lines { type "number" }
+			statements { type "number" }
+		}
+	}
 }
 
 document {
-	coverageThreshold Map<Threshold>
-	moduleNameMapper Map<string>
-	testEnvironment string
-	testRunner string
+	coverageThreshold {
+		type "map"
+		values { type "$threshold" }
+	}
+	moduleNameMapper {
+		type "map"
+		values { type "string" }
+	}
+	testEnvironment { type "string" }
+	testRunner { type "string" }
 }
 ```
