@@ -456,7 +456,65 @@ document {
 
 ### Properties
 
+Like the configuration document, properties are the key-value pairs, also known as the "configuration settings". All properties a user may configure are defined through the `document` block, which is a recursive map and is heavily demonstrated with the previous examples. Each property value in this map _must_ be a schema node.
+
+```
+definitions {
+	logLevel { 
+		type "string" 
+		enum ["info", "debug", "error"]
+	}
+}
+
+document {
+	logLevel { type "$logLevel" }
+	execute {
+		bail { type "boolean" }
+		concurrency { type "number" }
+		parallel { type "boolean" }
+	}
+}
+```
+
+Based on the schema above, we could configure an example document as follows.
+
+```
+logLevel "info"
+execute {
+	concurrency 6
+	parallel true
+}
+```
+
+> All properties within a configuration document are optional, must have a default value (handled at runtime), and _cannot_ be marked as required.
+
 ### Attributes
+
+Available attributes within a document are defined with the `attributes` block, which is a non-recursive map of attribute names to schema nodes. Attributes that _do not_ accept an argument must be declared as booleans, while attributes that do accept an argument can be any of the primitive values.
+
+```
+attributes {
+	deprecated { type "boolean" }
+	env {
+		type "string"
+		enum ["development", "staging", "production"]
+	}
+}
+```
+
+
+Based on the schema above, we could configure an example document as follows.
+
+```
+@deprecated
+persistOutput false
+
+@env("development")
+logLevel "debug"
+
+@env("production")
+logLevel "error"
+```
 
 ## Examples
 
