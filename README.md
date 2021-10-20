@@ -18,11 +18,12 @@
     - [Lists](#lists)
     - [Tuples](#tuples)
     - [Maps](#maps)
-- [Schema](#schema)
+- [Schema](#schema-1)
   - [Primitives](#primitives-1)
   - [Structurals](#structurals-1)
   - [Properties](#properties-1)
   - [Attributes](#attributes-1)
+  - [Definitions](#definitions)
 - [Examples](#examples)
   - [package.json](#packagejson)
   - [tsconfig.json](#tsconfigjson)
@@ -514,6 +515,64 @@ logLevel "debug"
 
 @env("production")
 logLevel "error"
+```
+
+### Definitions
+
+Definitions are a mechanism for defining reusable schema types/nodes, and can be referenced by name, prepended with a dollar sign (`$`), using the `type` property within the node. Definitions are declared within the `definitions` block.
+
+```
+definitions {
+	fileGlob {
+		type "list"
+		items { type "string" }
+	}
+}
+
+document {
+	include { type "$fileGlob" }
+	exclude { type "$fileGlob" }
+}
+```
+
+Definitions can also reference other definitions and even itself!
+
+```
+definitions {
+	category {
+		type "map"
+		properties {
+			title { type "string" }
+			children { 
+				type "list"
+				items "$category"
+			}
+		}
+	}
+	categoryList {
+		type "list"
+		items { type "$category" }
+	}
+}
+```
+
+### Unions
+
+The `union` type is a type formed from two or more other types, representing values that may be any one of those types. Each union must have a `oneOf` property, which is a list of all acceptable types. Using our `fileGlob` definition above, let's support strings OR a list of strings.
+
+```
+definitions {
+	fileGlob {
+		type "union"
+		oneOf [
+			{ type "string" },
+			{
+				type "list"
+				items { type "string" }	
+			},
+		]
+	}
+}
 ```
 
 ## Examples
