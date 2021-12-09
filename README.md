@@ -18,7 +18,12 @@
     - [Lists](#lists)
     - [Tuples](#tuples)
     - [Maps](#maps)
-- [Schema](#schema)
+- [Schema](#schema-1)
+  - [Primitives](#primitives-1)
+  - [Structurals](#structurals-1)
+  - [Properties](#properties-1)
+  - [Attributes](#attributes-1)
+  - [Definitions](#definitions)
 - [Examples](#examples)
   - [package.json](#packagejson)
   - [tsconfig.json](#tsconfigjson)
@@ -29,7 +34,7 @@
 
 ### Properties
 
-Properties are the most common feature, as they declare a key-value pair within its current [block scope](#maps), and are returned from the figg file when parsed. If defined at the top-level of a file, this is referred to as the root scope.
+Properties are the most common feature, as they declare a key-value pair within its current [block scope](#maps), and are returned from the figg file when parsed. If defined at the top-level of a file, this is referred to as the document scope.
 
 Declaring a property requires a unique name on the left-hand side (with no leading whitespace if in the root scope), followed by a space, and lastly a [value](#value-types) on the right-hand side. An unquoted property name supports the characters `a-z`, `A-Z`, `0-9`, `_` and _must not_ begin with a number, while a quoted property name supports any character and _must_ be wrapped with [double quotes](#strings) or [backticks](#literals).
 
@@ -357,14 +362,228 @@ one {
 
 ## Schema
 
-TODO
+A schema is a secondary `.figg` file that's coupled with the primary `.figg` file (the configuration document) to provide structural type information. This information can then be fed into editors and tooling to provide static analysis, linting, type checking, autocompletion, and more. The schema defines types and shapes in a similar fashion to [JSON Schema](https://json-schema.org/).
+
+The following 3 properties can be declared at the root of the schema, with `document` being required, and `attributes` and `definitions` being optional.
+
+```
+definitions {
+	# Custom reusable type definitions
+}
+
+attributes {
+	# Type information for available attributes
+}
+
+document {
+	# Type information for properties in the primary document
+}
+```
+
+When annotating an attribute or property, an object value with a `type` field at minimum is required.
+
+### Primitives
+
+Primitive values are represented with the `boolean`, `number`, or `string` type.
+
+```
+document {
+	propOne { type "boolean" }
+	propTwo { type "number" }
+	propThree { type "string" }
+}
+```
+
+#### Enums
+
+Enums are also supported for literal strings and numbers, by declaring an `enum` field with a list of values, alongside the `type` field.
+
+```
+document {
+	logLevel { 
+		type "string" 
+		enum ["info", "debug", "error"]
+	}
+}
+```
+
+### Structurals
+
+Lists are represented with the `list` type and _must_ be accompanied by an `items` field, which annotates the items (values) within the list.
+
+```
+document {
+	listOfNumbers {
+		type "list"
+		items { type "number" }
+	}
+}
+```
+
+Maps are represented with the `map` type and _must_ be accompanied by a `values` field OR a `properties` field, but not both. The 2 variants support the following object patterns:
+
+- Dynamic/indexed objects, where all keys are unknown strings, but the values are of the same type. The `values` field annotates the values within the object.
+- Static/shaped objects, where all the keys are explicitly named, and each has their own unique value type. The `properties` field annotates the structure of each key-value pair.
+
+```
+document {
+	mapOfStrings {
+		type "map"
+		values { type "string" }
+	}
+	shapedMap {
+		type "map"
+		properties {
+			id { type "number" }
+			name { type "string" }
+		}
+	}
+}
+```
+
+Tuples are represented with the `tuple` type and _must_ be accompanied by an `elements` field, which annotates each element within the tuple using a list.
+
+```
+document {
+	user {
+		type "tuple"
+		elements [
+			{ type "number" }, # ID
+			{ type "string" }, # Name
+		]
+	}
+}
+```
+
+### Properties
+
+Like the configuration document, properties are the key-value pairs, also known as the "configuration settings". All properties a user may configure are defined through the `document` block, which is a recursive map and is heavily demonstrated with the previous examples. Each property value in this map _must_ be a schema node.
+
+```
+definitions {
+	logLevel { 
+		type "string" 
+		enum ["info", "debug", "error"]
+	}
+}
+
+document {
+	logLevel { type "$logLevel" }
+	execute {
+		bail { type "boolean" }
+		concurrency { type "number" }
+		parallel { type "boolean" }
+	}
+}
+```
+
+Based on the schema above, we could configure an example document as follows.
+
+```
+logLevel "info"
+execute {
+	concurrency 6
+	parallel true
+}
+```
+
+> All properties within a configuration document are optional, must have a default value (handled at runtime), and _cannot_ be marked as required.
+
+### Attributes
+
+Available attributes within a document are defined with the `attributes` block, which is a non-recursive map of attribute names to schema nodes. Attributes that _do not_ accept an argument must be declared as booleans, while attributes that do accept an argument can be any of the primitive values.
+
+```
+attributes {
+	deprecated { type "boolean" }
+	env {
+		type "string"
+		enum ["development", "staging", "production"]
+	}
+}
+```
+
+
+Based on the schema above, we could configure an example document as follows.
+
+```
+@deprecated
+persistOutput false
+
+@env("development")
+logLevel "debug"
+
+@env("production")
+logLevel "error"
+```
+
+### Definitions
+
+Definitions are a mechanism for defining reusable schema types/nodes, and can be referenced by name, prepended with a dollar sign (`$`), using the `type` property within the node. Definitions are declared within the `definitions` block.
+
+```
+definitions {
+	fileGlob {
+		type "list"
+		items { type "string" }
+	}
+}
+
+document {
+	include { type "$fileGlob" }
+	exclude { type "$fileGlob" }
+}
+```
+
+Definitions can also reference other definitions and even itself!
+
+```
+definitions {
+	category {
+		type "map"
+		properties {
+			title { type "string" }
+			children { 
+				type "list"
+				items "$category"
+			}
+		}
+	}
+	categoryList {
+		type "list"
+		items { type "$category" }
+	}
+}
+```
+
+### Unions
+
+The `union` type is a type formed from two or more other types, representing values that may be any one of those types. Each union must have a `oneOf` property, which is a list of all acceptable types. Using our `fileGlob` definition above, let's support strings OR a list of strings.
+
+```
+definitions {
+	fileGlob {
+		type "union"
+		oneOf [
+			{ type "string" },
+			{
+				type "list"
+				items { type "string" }	
+			},
+		]
+	}
+}
+```
 
 ## Examples
 
 ### package.json
 
+Document:
+
 ```
 name "figg"
+version "1.0.0"
 description "The coolest configuration format."
 keywords ["figg", "config"]
 license "MIT"
@@ -377,10 +596,41 @@ devDependencies {
 }
 ```
 
-### tsconfig.json
+Schema:
 
 ```
-extends "./tsconfig.options.json"
+definitions {
+	dependencies {
+		type "map"
+		values { type "string" }
+	}
+}
+
+document {
+	name { 
+		type "string" 
+		required true
+	}
+	version { type "string" }
+	description { type "string" }
+	keywords {
+		type "list"
+		items { type "string" }
+	}
+	license { type "string" }
+	main { type "string" }
+	peerDependencies { type "$dependencies" }
+	devDependencies { type "$dependencies" }
+	dependencies { type "$dependencies" }
+}
+```
+
+### tsconfig.json
+
+Document:
+
+```
+#[extends]: ./tsconfig.options.json
 
 include ["**/*"]
 
@@ -399,7 +649,40 @@ compilerOptions {
 }
 ```
 
+Schema:
+
+```
+definitions {
+	fileGlob {
+		type "list"
+		items { type "string" }
+	}
+}
+
+document {
+	include { type "$fileGlob" }
+	exclude { type "$fileGlob" }
+	compilerOptions {
+		type "map"
+		properties {
+			strict { type "boolean" }
+			esModuleInterop { type "boolean" }
+			module {
+				type "string"
+				enum ["esnext", "commonjs"]
+			}
+			paths {
+				type "map"
+				values { type "$fileGlob" }
+			}
+		}
+	}
+}
+```
+
 ### babel.config.js
+
+Document:
 
 ```
 plugins ["relay"]
@@ -420,7 +703,59 @@ overrides [
 ]
 ```
 
+Schema:
+
+```
+definitions {
+	entry {
+		type "union"
+		oneOf [
+			{ type "string" },
+			{
+				type "tuple"
+				members [
+					{ 
+						type "string" 
+						required true
+					}
+					{ type "map" } # TODO
+				]	
+			}
+		]	
+	}
+	entryList {
+		type "list"
+		items { type "$entry" }
+	}
+	fileGlob {
+		type "list"
+		items { type "string" }
+	}
+}
+
+document {
+	plugins { type "$entryList" }
+	presets { type "$entryList" }
+	overrides {
+		type "list"
+		items {
+			type "map"
+			properties {
+				files { 
+					type "$fileGlob" 
+					required true
+				}
+				plugins { type "$entryList" }
+				presets { type "$entryList" }
+			}
+		}
+	}
+}
+```
+
 ### jest.config.js
+
+Document:
 
 ```
 coverageThreshold {
@@ -438,4 +773,33 @@ moduleNameMapper {
 
 testEnvironment "jsdom"
 testRunner "jest-circus/runner"
+```
+
+Schema:
+
+```
+definitions {
+	threshold {
+		type "map"
+		properties {
+			branches { type "number" }
+			functions { type "number" }
+			lines { type "number" }
+			statements { type "number" }
+		}
+	}
+}
+
+document {
+	coverageThreshold {
+		type "map"
+		values { type "$threshold" }
+	}
+	moduleNameMapper {
+		type "map"
+		values { type "string" }
+	}
+	testEnvironment { type "string" }
+	testRunner { type "string" }
+}
 ```
